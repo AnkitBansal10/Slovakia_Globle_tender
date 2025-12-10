@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Oz Liveness WEB Sample</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="referrer" content="origin" />
+    <!-- Plugin -->
+    <script src="https://<web-adapter-url>/plugin_liveness.php"></script>
+</head>
+
+<body>
+<div>
+    <h1>Web Sample</h1>
+    <button id="start-liveness-button">Start Liveness</button>
+</div>
+
+<script>
+    window.addEventListener('load', function() {
+        document.getElementById('start-liveness-button').addEventListener('click', function () {
+            OzLiveness.open({
+                lang: 'en',
+                action: [
+                    // 'photo_id_front', // request photo ID picture
+                    'video_selfie_blank' // request passive liveness video
+                ],
+                on_complete: function (result) {
+                    // This callback is invoked when the analysis is complete
+                    console.log('on_complete', result);
+                },
+                on_error: function (error) {
+                    // This callback is invoked when an error occurs
+                    console.error('on_error', error);
+                },
+            });
+        });
+    });
+</script>
+</body>
+
+</html>

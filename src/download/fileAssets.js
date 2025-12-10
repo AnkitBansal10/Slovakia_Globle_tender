@@ -1,0 +1,1 @@
+// fileAssets.js - placeholder

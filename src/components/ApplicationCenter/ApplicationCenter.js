@@ -1,0 +1,104 @@
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Alert, Text } from 'react-native';
+import { Dropdown } from 'react-native-element-dropdown';
+import { colors } from '../../utils/colors';
+import { Poppins_Fonts } from '../../utils/fonts';
+import { scale } from '../../utils/Responsive';
+import { data_center } from '../../utils/MockData';
+
+
+const ApplicationCenter = ({ value, onValueChange, hasError, errorMessage }) => {
+    const [dropdownData, setDropdownData] = useState([]);
+
+    useEffect(() => {
+        if (data_center) {
+            const formattedData = data_center.map(center => ({
+                label: `${center.l_name}`,
+                value: center.l_id,
+                originalData: center
+            }));
+            setDropdownData(formattedData);
+        }
+    }, []);
+
+    const handleValueChange = (item) => {
+        onValueChange && onValueChange(item.value);
+    };
+
+    return (
+        <View style={styles.container}>
+            <Dropdown
+                style={[styles.dropdown, hasError && styles.dropdownError]}
+                placeholderStyle={[styles.placeholderStyle, hasError && styles.errorPlaceholder]}
+                selectedTextStyle={styles.selectedTextStyle}
+                iconStyle={styles.iconStyle}
+                iconColor={hasError ? colors.error : colors.comanTextcolor2}
+                data={dropdownData}
+                maxHeight={300}
+                labelField="label"
+                valueField="value"
+                placeholder="Application Center"
+                value={value}
+                onChange={handleValueChange}
+            />
+            {hasError && <Text style={styles.errorText}>{errorMessage}</Text>}
+        </View>
+    );
+};
+
+const styles = StyleSheet.create({
+    container: {
+        marginTop: 20
+    },
+    dropdown: {
+        height: 60,
+        borderColor: colors.borderColorSecondcolor,
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 8,
+    },
+    dropdownError: {
+        borderColor: colors.error,
+    },
+    placeholderStyle: {
+        fontSize: 16,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+        color: colors.comanTextcolor2
+    },
+    errorPlaceholder: {
+        color: colors.error,
+    },
+    selectedTextStyle: {
+        fontSize: 16,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+        color: colors.comanTextcolor2
+    },
+    text: {
+        fontSize: 16,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+        color: colors.commonTextColor,
+    },
+    iconStyle: {
+        width: 32,
+        height: 16,
+    },
+    itemText: {
+        fontSize: 16,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+        color: colors.commonTextColor,
+    },
+    selectedItemText: {
+        fontSize: 16,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+        color: colors.commonTextColor,
+    },
+    errorText: {
+        color: colors.error,
+        fontSize: scale(12),
+        marginTop: 4,
+        marginLeft: 8,
+        fontFamily: Poppins_Fonts.Poppins_Regular,
+    },
+});
+
+export default ApplicationCenter;
