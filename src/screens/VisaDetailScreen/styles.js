@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import { colors } from "../../utils/colors";
 import { scale, verticalScale, moderateScale } from "../../utils/Responsive";
 import { Geist_Fonts,Poppins_Fonts } from "../../utils/fonts";

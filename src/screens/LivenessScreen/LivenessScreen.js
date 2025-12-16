@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Alert, ScrollView } from 'react-native';
-import { initAndLogin, startLiveness } from './ozLiveness';
-import { API_Server, login, Password } from '../../api/ozforensics';
+import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { startLiveness } from './ozLiveness';
+import { authorize, uploadMedia } from '../../api/ozApi';
+
 
 export default function LivenessAutoScreen() {
   const [loading, setLoading] = useState(true);
@@ -10,20 +11,30 @@ export default function LivenessAutoScreen() {
   useEffect(() => {
     const run = async () => {
       try {
-        // 1. Silent login
-        await initAndLogin({
-          serverUrl: API_Server,
-          username: login,
-          password: Password,
+        // 1️⃣ Open SDK → VIDEO
+        const videoPath = await startLiveness();
+        console.log('Video path:', videoPath);
+        console.log('Video path:', videoPath?.folderId);
+
+
+        // 2️⃣ Auth
+        const token = await authorize();
+        console.log('Access token:', token);
+
+        // 3️⃣ Upload VIDEO + PHOTO
+        const response = await uploadMedia({
+          accessToken: token,
+          folderId:videoPath?.folderId,
+          videoPath:"",
+          photoPath: "", // ✅ media_key2
         });
 
-        // 2. Open liveness SDK and run analysis
-        const resultData = await startLiveness();
-        setResult(resultData);
-        console.log('Liveness result:', resultData);
+        console.log('Upload response:', response);
+        setResult(response);
+
       } catch (e) {
-        console.log('Liveness error', e);
-        Alert.alert('Error', e?.message ?? 'Liveness failed');
+        console.log('Error:', e);
+        Alert.alert('Error', e.message);
       } finally {
         setLoading(false);
       }
@@ -32,15 +43,20 @@ export default function LivenessAutoScreen() {
     run();
   }, []);
 
-  
-
   return (
     <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-
+      {loading ? (
         <>
           <ActivityIndicator size="large" />
-          <Text style={{ marginTop: 10 }}>Opening Liveness...</Text>
+          <Text>Opening Liveness…</Text>
         </>
+      ) : (
+        <Text style={{ padding: 12 }}>
+          {JSON.stringify(result, null, 2)}
+        </Text>
+      )}
     </View>
   );
 }
+
+
