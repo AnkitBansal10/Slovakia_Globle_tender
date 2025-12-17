@@ -2,22 +2,14 @@ package com.blsvisaappoinmentbook
 
 import android.app.Activity
 import android.content.Intent
-import com.facebook.react.bridge.ActivityEventListener
-import com.facebook.react.bridge.Promise
-import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.bridge.ReactContextBaseJavaModule
-import com.facebook.react.bridge.ReactMethod
-
-import com.blsvisaappoinmentbook.R
-
+import android.net.Uri
+import com.facebook.react.bridge.*
 import com.ozforensics.liveness.sdk.core.OzLivenessSDK
-import com.ozforensics.liveness.sdk.security.LicenseSource
 import com.ozforensics.liveness.sdk.core.OzLivenessResultCode
-import com.ozforensics.liveness.sdk.core.model.OzAbstractMedia
-import com.ozforensics.liveness.sdk.analysis.AnalysisRequest
-import com.ozforensics.liveness.sdk.analysis.entity.Analysis
-import com.ozforensics.liveness.sdk.analysis.entity.RequestResult
 import com.ozforensics.liveness.sdk.core.model.OzAction
+import com.ozforensics.liveness.sdk.core.model.OzAbstractMedia
+import com.ozforensics.liveness.sdk.security.LicenseSource
+import com.blsvisaappoinmentbook.R
 
 class OzLivenessModule(
     private val reactContext: ReactApplicationContext
@@ -37,7 +29,10 @@ class OzLivenessModule(
     override fun getName(): String = "OzLiveness"
 
     /**
-     * Start liveness flow (NO LOGIN)
+     * Start OZ Liveness
+     * ❌ No login
+     * ❌ No token
+     * ✅ License only
      */
     @ReactMethod
     fun startLiveness(promise: Promise) {
@@ -47,7 +42,7 @@ class OzLivenessModule(
             return
         }
 
-        // ✅ Init SDK ONCE (no login)
+        // Init SDK once (LICENSE ONLY)
         if (!isSdkInitialized) {
             OzLivenessSDK.init(
                 reactContext,
@@ -69,7 +64,8 @@ class OzLivenessModule(
     }
 
     /**
-     * Handle SDK result
+     * Handle result
+     * ✅ Returns image & video URIs
      */
     override fun onActivityResult(
         activity: Activity,
@@ -84,39 +80,23 @@ class OzLivenessModule(
 
         when (resultCode) {
 
-            OzLivenessResultCode.SUCCESS -> {
-                val mediaList: List<OzAbstractMedia>? =
-                    OzLivenessSDK.getResultFromIntent(data)
+        OzLivenessResultCode.SUCCESS -> {
+    val mediaList: List<OzAbstractMedia>? =
+        OzLivenessSDK.getResultFromIntent(data)
+    val result = Arguments.createMap()
+    result.putBoolean("success", true)
+    result.putInt("mediaCount", mediaList?.size ?: 0)
 
-                if (mediaList.isNullOrEmpty()) {
-                    promise.reject("NO_MEDIA", "No media returned")
-                    return
-                }
+    // Collect media types only
+    val types = mediaList
+        ?.joinToString(",") { it.javaClass.simpleName }
+        ?: ""
 
-                AnalysisRequest.Builder()
-                    .addAnalysis(
-                        Analysis(
-                            Analysis.Type.QUALITY,
-                            Analysis.Mode.SERVER_BASED,
-                            mediaList
-                        )
-                    )
-                    .build()
-                    .run(
-                        { requestResult: RequestResult ->
-                            // ✅ Send FULL result to JS
-                            promise.resolve(requestResult.toString())
-                        },
-                        { error ->
-                            promise.reject(
-                                "ANALYSIS_ERROR",
-                                error.message ?: "Analysis failed",
-                                error
-                            )
-                        },
-                        { _ -> }
-                    )
-            }
+    result.putString("mediaTypes", types)
+    // Raw SDK response
+    result.putString("rawResult", mediaList?.toString() ?: "")
+    promise.resolve(result)
+}
 
             OzLivenessResultCode.USER_CLOSED_LIVENESS -> {
                 promise.reject("USER_CANCELLED", "User closed liveness")
