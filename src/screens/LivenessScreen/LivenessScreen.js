@@ -1,85 +1,107 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  Alert,
+} from 'react-native';
+
 import { startLiveness } from './ozLiveness';
-import { authorize, uploadMedia ,uploadMediaFolder_id } from '../../api/ozApi';
+import {
+  uploadMediaFolder_id,
+  runAnalyses,
+  GetAnalyses,
+} from '../../api/ozApi';
+import OZLoadingScreen from './OZLoadingScreen';
 
+const OZ_GREEN = '#12C7C2';
+const OZ_RED = '#E74C3C';
 
-export default function LivenessAutoScreen() {
-  const [loading, setLoading] = useState(true);
+export default function LivenessAutoScreen({ route }) {
+  const { token, folderId, imageurl } = route.params || {};
+
+  const [processing, setProcessing] = useState(true); // 🔥 START LOADING
   const [result, setResult] = useState(null);
-  const [imagepaths,SetImagepath] =useState(null)
 
-  useEffect(() => {
-    const run = async () => {
-      try {
-        // 1️⃣ Open SDK → VIDEO
-        const res = await startLiveness();
-        console.log("res", res)
-        const extractPath = (raw) => {
-          if (!raw) return null;
-          const match = raw.match(/path=([^,)]+)/);
-          return match ? match[1] : null;
-        };
-        const videoPath = extractPath(res.rawResult);
-        console.log('Video path:', videoPath);
-        // image
-        const extractLosslessImagePath = (rawResult) => {
-          if (!rawResult) return null;
-          const match = rawResult.match(
-            /losslessMedia=MediaSource\(path=([^,]+),/i
-          );
-          return match ? match[1] : null;
-        };
-        const imagePath = extractLosslessImagePath(res.rawResult);
-        console.log('Lossless image path:', imagePath);
-        SetImagepath(imagePath)
-        // 2️⃣ Auth
-        const token = await authorize();
-        console.log('Access token:', token);
-        // 3️⃣ Upload VIDEO + PHOTO
-        const response = await uploadMedia({
-          accessToken:token ,
-          videoPath:"",
-          photoPath:"", // ✅ media_key2
-        });
-        console.log('Upload response:', response);
-        console.log('folder_id response:', response?.folder_id);
-        setResult(response);
-         const Folder_id = await uploadMediaFolder_id({
-          accessToken:token ,
-          videoPath:videoPath,
-          photoPath:imagePath, 
-          folder_id:response?.folder_id
-        });
-        console.log('Upload Folder_idresponse:', Folder_id);
-      }
-      catch (e) {
-  console.log('❌ ERROR (raw):', e?.message);
-  Alert.alert(
-    'Upload Error',
-    e?.message || 'Unknown network error'
-  );
-} finally {
-  setLoading(false);
-}
-    };
-    run();
-  }, []);
+  const isVerified =
+    result?.resolution === 'SUCCESS' ||
+    result?.resolution_status === 'SUCCESS';
 
+ useEffect(() => {
+  const runFlow = async () => {
+    try {
+      await startLiveness();
+      const uploadRes = await uploadMediaFolder_id({
+        accessToken: token,
+        folder_id: folderId,
+        videoPath: imageurl,
+        photoPath: imageurl,
+      });
+      const mediaId = uploadRes?.[0]?.media_id;
+      if (!mediaId) throw new Error('media_id missing');
+      const analysesRes = await runAnalyses({
+        accessToken: token,
+        folder_id: folderId,
+      });
+      const analyseId =
+        analysesRes?.[0]?.analyse_id ||
+        analysesRes?.[0]?.analysis_id;
+      const finalResult = await GetAnalyses({
+        accessToken: token,
+        analyse_id: analyseId,
+      });
+      setResult(finalResult);
+    } catch (e) {
+      Alert.alert('Liveness Error', e.message);
+    } finally {
+      setProcessing(false);
+    }
+  };
+  runFlow();
+}, []);
+
+  if (processing) {
+    return <OZLoadingScreen />;
+  }
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      {loading ? (
-        <>
-          <ActivityIndicator size="large" />
-          <Text>Opening Liveness…</Text>
-        </>
-      ) : (
-        <Text style={{ padding: 12 }}>
-          {JSON.stringify(result, null, 2)}
-        </Text>
+    <View
+      style={{
+        flex: 1,
+        padding: 16,
+        backgroundColor: '#fff',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      {/* ✅ SUCCESS */}
+      {isVerified && (
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ color: OZ_GREEN, fontSize: 22, fontWeight: '700' }}>
+            ✔ Verification Successful
+          </Text>
+          <Text style={{ marginTop: 6, color: '#1E8449', fontSize: 14 }}>
+            Identity verified successfully
+          </Text>
+        </View>
+      )}
+
+      {/* ❌ FAILURE */}
+      {!isVerified && result && (
+        <View style={{ padding: 20, alignItems: 'center' }}>
+          <Text style={{ color: OZ_RED, fontSize: 20, fontWeight: '700' }}>
+            ✖ Verification Failed
+          </Text>
+          <Text
+            style={{
+              marginTop: 6,
+              color: '#922B21',
+              fontSize: 14,
+              textAlign: 'center',
+            }}
+          >
+            Please retry with clear face and proper lighting
+          </Text>
+        </View>
       )}
     </View>
   );
 }
-
-

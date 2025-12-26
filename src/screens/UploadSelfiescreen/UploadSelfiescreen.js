@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import {
     View,
     StatusBar,
+    Alert,
 } from "react-native";
 import { styles } from "./styles";
 import { BackgroundGradient } from "../../utils/SvgImage";
@@ -10,24 +11,72 @@ import ContactCard from "../../components/ContactCard/ContactCard";
 import StepProgress from "./componets/StepIndicator";
 import UploadPassportPhoto from "./componets/UploadPassportPhoto";
 import CustomButton from "../../components/CustomButton/CustomButton";
+import { authorize, uploadMedia } from "../../api/ozApi";
 
-export default function UploadSelfiescreen({ currentStep = 1, totalSteps = 2, navigation }) {
+export default function UploadSelfiescreen({
+    currentStep = 1,
+    totalSteps = 2,
+    navigation,
+}) {
     const [passportImageUri, setPassportImageUri] = useState(null);
-    const handleImageSelected = (uri) => {
-        console.log(uri)
+    const [token, setToken] = useState(null);
+    const [folderId, setFolderId] = useState(null);
+    const [imageurl,setimageurl] = useState(null)
+    const [loading, setLoading] = useState(false);
+
+    // --------------------------------------------------
+    // IMAGE SELECTED
+    // --------------------------------------------------
+    const handleImageSelected = async (uri) => {
+        console.log("Selected image:", uri);
         setPassportImageUri(uri);
-        if (uri) {
-            console.log("Passport image selected:", uri);
-            // You can now use this URI for uploads or other operations
-        } else {
-            console.log("Passport image removed");
+        if (!uri) return;
+        try {
+            setLoading(true);
+            const accessToken = await authorize();
+            if (!accessToken) throw new Error("Authorization failed");
+            setToken(accessToken);
+            const uploadResponse = await uploadMedia({
+                accessToken,
+                videoPath: "",
+                photoPath:"",
+            });
+            setimageurl(uri)
+            console.log("url",uri)
+            const folder_id = uploadResponse?.folder_id;
+            if (!folder_id) throw new Error("Folder ID not returned");
+            setFolderId(folder_id);
+            console.log("Upload success. Folder ID:", folder_id);
+        } catch (e) {
+            Alert.alert("Upload Error", e?.message || "Something went wrong");
+        } finally {
+            setLoading(false);
         }
+    };
+
+    // --------------------------------------------------
+    // CONTINUE BUTTON
+    // --------------------------------------------------
+    const handleContinue = () => {
+        if (!token || !folderId||!imageurl) {
+            Alert.alert("Error", "Upload not completed yet");
+            return;
+        }
+        navigation.navigate("LivenessScreen", {
+            token,
+            folderId,
+            imageurl
+        });
     };
     return (
         <View style={styles.container}>
-            <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
+            <StatusBar
+                barStyle="dark-content"
+                backgroundColor="transparent"
+                translucent
+            />
             <BackgroundGradient
-                style={{ position: "absolute", width: '100%', height: '100%' }}
+                style={{ position: "absolute", width: "100%", height: "100%" }}
             />
             <View style={styles.logo}>
                 <ProfileMenuModal />
@@ -36,10 +85,14 @@ export default function UploadSelfiescreen({ currentStep = 1, totalSteps = 2, na
                 <ContactCard />
                 <StepProgress currentPosition={2} />
                 <View style={styles.uploadContainer}>
-                    <UploadPassportPhoto onImageSelected={(uri) => handleImageSelected(uri)} />
+                    <UploadPassportPhoto onImageSelected={handleImageSelected} />
                 </View>
                 {passportImageUri && (
-                    <CustomButton label="Continue" onPress={()=>navigation.navigate("LivenessScreen")} />
+                    <CustomButton
+                        label={loading ? "Uploading..." : "Continue"}
+                        disabled={loading}
+                        onPress={handleContinue}
+                    />
                 )}
             </View>
         </View>

@@ -80,23 +80,23 @@ class OzLivenessModule(
 
         when (resultCode) {
 
-        OzLivenessResultCode.SUCCESS -> {
-    val mediaList: List<OzAbstractMedia>? =
-        OzLivenessSDK.getResultFromIntent(data)
-    val result = Arguments.createMap()
-    result.putBoolean("success", true)
-    result.putInt("mediaCount", mediaList?.size ?: 0)
+            OzLivenessResultCode.SUCCESS -> {
+                val mediaList: List<OzAbstractMedia>? =
+                    OzLivenessSDK.getResultFromIntent(data)
+                val result = Arguments.createMap()
+                result.putBoolean("success", true)
+                result.putInt("mediaCount", mediaList?.size ?: 0)
 
-    // Collect media types only
-    val types = mediaList
-        ?.joinToString(",") { it.javaClass.simpleName }
-        ?: ""
+                // Collect media types only
+                val types = mediaList
+                    ?.joinToString(",") { it.javaClass.simpleName }
+                    ?: ""
 
-    result.putString("mediaTypes", types)
-    // Raw SDK response
-    result.putString("rawResult", mediaList?.toString() ?: "")
-    promise.resolve(result)
-}
+                result.putString("mediaTypes", types)
+                // Raw SDK response
+                result.putString("rawResult", mediaList?.toString() ?: "")
+                promise.resolve(result)
+            }
 
             OzLivenessResultCode.USER_CLOSED_LIVENESS -> {
                 promise.reject("USER_CANCELLED", "User closed liveness")
@@ -108,6 +108,5 @@ class OzLivenessModule(
             }
         }
     }
-
     override fun onNewIntent(intent: Intent) {}
 }

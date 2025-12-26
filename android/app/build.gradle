@@ -116,6 +116,7 @@ dependencies {
     implementation("com.facebook.react:react-android")
     implementation project(':react-native-vector-icons')
     implementation 'com.airbnb.android:lottie:5.0.0'
+    implementation project(':react-native-fs')
     implementation 'com.ozforensics.liveness:sdk:8.22.0'
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
