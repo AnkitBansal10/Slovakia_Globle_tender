@@ -18,6 +18,7 @@ import ProcessingScreen from '../screens/ProcessingScreen/ProcessingScreen'
 import DownloadHelper from '../download/DownloadHelper'
 import LivenessScreen from '../screens/LivenessScreen/LivenessScreen'
 import loginSuccessScreen from '../components/LoginSuccessScreen/LoginSuccessScreen'
+
 const Stack = createNativeStackNavigator();
 export default function RootStack() {
     return (
@@ -30,7 +31,7 @@ export default function RootStack() {
                     backgroundColor: 'transparent',
                 },
             }}
-            initialRouteName='Uploadselfiescreen'>
+            initialRouteName='SplashScreen'>
             <Stack.Screen name='LivenessScreen' component={LivenessScreen} />
             <Stack.Screen name='DownloadHelper' component={DownloadHelper} />
             <Stack.Screen name='loginSuccessScreen' component={loginSuccessScreen} />

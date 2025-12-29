@@ -4,7 +4,6 @@ import {
   Text,
   Alert,
 } from 'react-native';
-
 import { startLiveness } from './ozLiveness';
 import {
   uploadMediaFolder_id,
@@ -12,53 +11,52 @@ import {
   GetAnalyses,
 } from '../../api/ozApi';
 import OZLoadingScreen from './OZLoadingScreen';
-
 const OZ_GREEN = '#12C7C2';
 const OZ_RED = '#E74C3C';
 
-export default function LivenessAutoScreen({ route }) {
+export default function LivenessAutoScreen({ route, navigation }) {
   const { token, folderId, imageurl } = route.params || {};
-
-  const [processing, setProcessing] = useState(true); // 🔥 START LOADING
+  const [processing, setProcessing] = useState(true);
   const [result, setResult] = useState(null);
-
   const isVerified =
     result?.resolution === 'SUCCESS' ||
     result?.resolution_status === 'SUCCESS';
 
- useEffect(() => {
-  const runFlow = async () => {
-    try {
-      await startLiveness();
-      const uploadRes = await uploadMediaFolder_id({
-        accessToken: token,
-        folder_id: folderId,
-        videoPath: imageurl,
-        photoPath: imageurl,
-      });
-      const mediaId = uploadRes?.[0]?.media_id;
-      if (!mediaId) throw new Error('media_id missing');
-      const analysesRes = await runAnalyses({
-        accessToken: token,
-        folder_id: folderId,
-      });
-      const analyseId =
-        analysesRes?.[0]?.analyse_id ||
-        analysesRes?.[0]?.analysis_id;
-      const finalResult = await GetAnalyses({
-        accessToken: token,
-        analyse_id: analyseId,
-      });
-      setResult(finalResult);
-    } catch (e) {
-      Alert.alert('Liveness Error', e.message);
-    } finally {
-      setProcessing(false);
-    }
-  };
-  runFlow();
-}, []);
-
+  useEffect(() => {
+    const runFlow = async () => {
+      try {
+        await startLiveness();
+        const uploadRes = await uploadMediaFolder_id({
+          accessToken: token,
+          folder_id: folderId,
+          videoPath: imageurl,
+          photoPath: imageurl,
+        });
+        const mediaId = uploadRes?.[0]?.media_id;
+        if (!mediaId) throw new Error('media_id missing');
+        const analysesRes = await runAnalyses({
+          accessToken: token,
+          folder_id: folderId,
+        });
+        const analyseId =
+          analysesRes?.[0]?.analyse_id ||
+          analysesRes?.[0]?.analysis_id;
+        const finalResult = await GetAnalyses({
+          accessToken: token,
+          analyse_id: analyseId,
+        });
+          if (finalResult.resolution === 'SUCCESS') {
+          navigation.navigate("ProcessingScreen");
+        }
+        setResult(finalResult);
+      } catch (e) {
+        Alert.alert('Liveness Error', e.message);
+      } finally {
+        setProcessing(false);
+      }
+    };
+    runFlow();
+  }, []);
   if (processing) {
     return <OZLoadingScreen />;
   }
@@ -83,7 +81,6 @@ export default function LivenessAutoScreen({ route }) {
           </Text>
         </View>
       )}
-
       {/* ❌ FAILURE */}
       {!isVerified && result && (
         <View style={{ padding: 20, alignItems: 'center' }}>
