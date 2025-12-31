@@ -38,7 +38,7 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       // For Android 13+ (API level 33+), we need READ_MEDIA_IMAGES instead of READ_EXTERNAL_STORAGE
       const androidVersion = Platform.Version;
       let storagePermission;
-      
+
       if (androidVersion >= 33) {
         // Android 13+ uses READ_MEDIA_IMAGES
         storagePermission = PermissionsAndroid.PERMISSIONS.READ_MEDIA_IMAGES;
@@ -69,7 +69,7 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options: ['Cancel', 'Take Selfie', 'Choose from Library'],
+          options: ['Cancel', 'Take Selfie'],
           cancelButtonIndex: 0,
         },
         async (buttonIndex) => {
@@ -91,7 +91,6 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       'Choose an option',
       [
         { text: 'Take Selfie', onPress: () => openCamera() },
-        { text: 'Choose from Library', onPress: () => openImageLibrary() },
         { text: 'Cancel', style: 'cancel' },
       ]
     );
@@ -103,12 +102,12 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       const hasCameraPermission = await requestCameraPermission();
       if (!hasCameraPermission) {
         Alert.alert(
-          'Camera Permission Required', 
+          'Camera Permission Required',
           'Camera permission is required to take photos.',
           [
-            { 
-              text: 'OK', 
-              onPress: () => console.log('Camera permission denied') 
+            {
+              text: 'OK',
+              onPress: () => console.log('Camera permission denied')
             }
           ]
         );
@@ -124,7 +123,7 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       saveToPhotos: true,
       includeBase64: false,
     };
-    
+
     ImagePicker.launchCamera(options, (response) => {
       handleImageResponse(response);
     });
@@ -136,12 +135,12 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       const hasStoragePermission = await requestStoragePermission();
       if (!hasStoragePermission) {
         Alert.alert(
-          'Storage Permission Required', 
+          'Storage Permission Required',
           'Storage permission is required to access your photos.',
           [
-            { 
-              text: 'OK', 
-              onPress: () => console.log('Storage permission denied') 
+            {
+              text: 'OK',
+              onPress: () => console.log('Storage permission denied')
             }
           ]
         );
@@ -166,11 +165,11 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
       console.log('User cancelled image picker');
     } else if (response.error) {
       console.log('ImagePicker Error: ', response.error);
-      
+
       // Handle specific error cases
       if (response.error.includes('permission') || response.errorCode === 'permission') {
         Alert.alert(
-          'Permission Denied', 
+          'Permission Denied',
           'Please grant the required permissions in your device settings to continue.',
           [{ text: 'OK' }]
         );
@@ -184,7 +183,7 @@ const UploadPassportPhoto = ({ onImageSelected }) => {
           break;
         case 'permission':
           Alert.alert(
-            'Permission Denied', 
+            'Permission Denied',
             'Please grant camera and storage permissions in your device settings.',
             [{ text: 'OK' }]
           );

@@ -16,7 +16,7 @@ const OZ_RED = '#E74C3C';
 
 export default function LivenessAutoScreen({ route, navigation }) {
   const { token, folderId, imageurl } = route.params || {};
-  const [processing, setProcessing] = useState(true);
+  const [processing, setProcessing] = useState(false);
   const [result, setResult] = useState(null);
   const isVerified =
     result?.resolution === 'SUCCESS' ||
@@ -24,8 +24,17 @@ export default function LivenessAutoScreen({ route, navigation }) {
 
   useEffect(() => {
     const runFlow = async () => {
+      let path = null
       try {
-        await startLiveness();
+        const res = await startLiveness();
+        console.log("res", res)
+        const regex = /path=([^,)]+)/;
+        const match = res?.rawResult.match(regex);
+        console.log("match", match)
+        if (match && match[1]) {
+          path = match[1];
+        }
+        console.log(path)
         const uploadRes = await uploadMediaFolder_id({
           accessToken: token,
           folder_id: folderId,
