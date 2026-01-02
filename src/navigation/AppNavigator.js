@@ -31,7 +31,7 @@ export default function RootStack() {
                     backgroundColor: 'transparent',
                 },
             }}
-            initialRouteName='SplashScreen'>
+            initialRouteName='Uploadselfiescreen'>
             <Stack.Screen name='LivenessScreen' component={LivenessScreen} />
             <Stack.Screen name='DownloadHelper' component={DownloadHelper} />
             <Stack.Screen name='loginSuccessScreen' component={loginSuccessScreen} />
